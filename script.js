@@ -597,22 +597,24 @@ function startTerminal() {
     const audioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!audioContextClass) return Promise.resolve();
     const ctx = new audioContextClass();
-    const sequence = [392, 440, 523.25, 659.25];
+    const noteFrequencies = [392, 440, 523.25, 659.25]; // G4, A4, C5, E5
     const stepMs = 220;
-    sequence.forEach((freq, i) => {
+    const minGain = 0.0001;
+    const contextCloseBufferMs = 200;
+    noteFrequencies.forEach((freq, i) => {
       const startTime = ctx.currentTime + i * (stepMs / 1000);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.setValueAtTime(minGain, startTime);
       gain.gain.exponentialRampToValueAtTime(0.16, startTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.2);
+      gain.gain.exponentialRampToValueAtTime(minGain, startTime + 0.2);
       osc.connect(gain).connect(ctx.destination);
       osc.start(startTime);
       osc.stop(startTime + (stepMs / 1000));
     });
-    const closeAfterMs = (sequence.length * stepMs) + 200;
+    const closeAfterMs = (noteFrequencies.length * stepMs) + contextCloseBufferMs;
     return new Promise(resolve => {
       setTimeout(() => {
         ctx.close().finally(resolve);

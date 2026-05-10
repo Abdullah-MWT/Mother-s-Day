@@ -586,24 +586,30 @@ function startTerminal() {
   const text = document.getElementById('voice-text');
   if (!btn || !waveform) return;
 
-  async function playFallbackTone() {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
+  function playFallbackTone() {
+    const audioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!audioContextClass) return Promise.resolve();
+    const ctx = new audioContextClass();
     const sequence = [392, 440, 523.25, 659.25];
+    const stepMs = 220;
     sequence.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.22);
-      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + i * 0.22 + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.22 + 0.2);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * (stepMs / 1000));
+      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + i * (stepMs / 1000) + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * (stepMs / 1000) + 0.2);
       osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.22);
-      osc.stop(ctx.currentTime + i * 0.22 + 0.22);
+      osc.start(ctx.currentTime + i * (stepMs / 1000));
+      osc.stop(ctx.currentTime + i * (stepMs / 1000) + (stepMs / 1000));
     });
-    setTimeout(() => ctx.close(), 1200);
+    const closeAfterMs = (sequence.length * stepMs) + 200;
+    return new Promise(resolve => {
+      setTimeout(() => {
+        ctx.close().finally(resolve);
+      }, closeAfterMs);
+    });
   }
 
   for (let i = 0; i < 24; i++) {

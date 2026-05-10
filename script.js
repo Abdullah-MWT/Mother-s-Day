@@ -108,7 +108,14 @@ function setLanguage(lang) {
 
   function trackSources() {
     if (!activeTrack) return [];
-    return [activeTrack.src, activeTrack.fallbackSrc].filter(Boolean);
+    const sources = [activeTrack.src].filter(Boolean);
+    if (activeTrack.src?.startsWith('Audio/')) {
+      sources.push(`audio/${activeTrack.src.slice('Audio/'.length)}`);
+    } else if (activeTrack.src?.startsWith('audio/')) {
+      sources.push(`Audio/${activeTrack.src.slice('audio/'.length)}`);
+    }
+    if (activeTrack.fallbackSrc) sources.push(activeTrack.fallbackSrc);
+    return [...new Set(sources)];
   }
 
   function syncPlayUi(isPlaying) {

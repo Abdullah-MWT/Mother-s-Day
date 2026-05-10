@@ -12,7 +12,7 @@ const APP = {
 };
 
 const PERF = {
-  lowEnd: (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
+  isLowEndDevice: (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
     || (navigator.deviceMemory && navigator.deviceMemory <= 4),
 };
 const CANVAS_MOUSE_INFLUENCE = 0.00006;
@@ -204,9 +204,9 @@ function setLanguage(lang) {
   const ctx = canvas.getContext('2d');
   let W, H, particles = [], stars = [], hearts = [], grid = [];
 
-  const particleCount = PERF.lowEnd || APP.liteMode ? 35 : 80;
-  const starCount = PERF.lowEnd || APP.liteMode ? 80 : 160;
-  const heartCount = PERF.lowEnd || APP.liteMode ? 8 : 16;
+  const particleCount = PERF.isLowEndDevice || APP.liteMode ? 35 : 80;
+  const starCount = PERF.isLowEndDevice || APP.liteMode ? 80 : 160;
+  const heartCount = PERF.isLowEndDevice || APP.liteMode ? 8 : 16;
 
   function resize() {
     W = canvas.width = window.innerWidth;
@@ -216,7 +216,7 @@ function setLanguage(lang) {
 
   function buildGrid() {
     grid = [];
-    const step = PERF.lowEnd || APP.liteMode ? 120 : 80;
+    const step = PERF.isLowEndDevice || APP.liteMode ? 120 : 80;
     for (let x = 0; x < W; x += step) grid.push({ x1: x, y1: 0, x2: x, y2: H });
     for (let y = 0; y < H; y += step) grid.push({ x1: 0, y1: y, x2: W, y2: y });
   }
@@ -572,11 +572,13 @@ function startTerminal() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(message);
-      const voices = window.speechSynthesis.getVoices?.() || [];
-      const hasUrdu = voices.some(v => v.lang && v.lang.toLowerCase().startsWith('ur'));
+      if (!speechVoices.length) speechVoices = window.speechSynthesis.getVoices?.() || [];
+      const hasUrdu = speechVoices.some(v => v.lang && v.lang.toLowerCase().startsWith('ur'));
       utter.lang = APP.lang === 'ur' && hasUrdu ? 'ur-PK' : 'en-US';
       if (APP.lang === 'ur' && !hasUrdu && text) {
         text.textContent = 'نوٹ: براؤزر میں اردو آواز دستیاب نہیں، انگریزی آواز استعمال ہوگی۔';
+      } else if (APP.lang === 'en' && !hasUrdu && text) {
+        text.textContent = 'Note: Urdu voice is unavailable in this browser, English voice is being used.';
       }
       utter.rate = 0.9;
       utter.onend = () => waveform.classList.remove('active');
@@ -632,7 +634,7 @@ function startTerminal() {
   if (!heart || !final) return;
 
   let timer = null;
-  const BURST_COUNT = 22;
+  const BURST_COUNT = 22; // tuned for visual density without overcrowding
 
   function burst() {
     vibrate(45);
@@ -678,7 +680,7 @@ function startTerminal() {
 (function initLiteMode() {
   const btn = document.getElementById('lite-mode-btn');
   if (!btn) return;
-  APP.liteMode = APP.reducedMotion || PERF.lowEnd;
+  APP.liteMode = APP.reducedMotion || PERF.isLowEndDevice;
 
   function syncUi() {
     document.body.classList.toggle('reduced-motion', APP.liteMode);
@@ -703,12 +705,13 @@ function startTerminal() {
     }
   });
 
-  const cards = document.querySelectorAll('.cards-grid .card').length;
-  document.documentElement.style.setProperty('--story-card-count', String(cards || 1));
+  const cardCount = document.querySelectorAll('.cards-grid .card').length;
+  document.documentElement.style.setProperty('--story-card-count', String(cardCount || 1));
 
   if ('speechSynthesis' in window) {
+    speechVoices = window.speechSynthesis.getVoices?.() || [];
     window.speechSynthesis.addEventListener('voiceschanged', () => {
-      window.speechSynthesis.getVoices();
+      speechVoices = window.speechSynthesis.getVoices?.() || [];
     });
   }
 })();
@@ -721,3 +724,4 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     if (target) target.scrollIntoView({ behavior: 'smooth' });
   });
 });
+let speechVoices = [];

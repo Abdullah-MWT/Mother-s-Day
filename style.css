@@ -22,7 +22,9 @@
   --font-ui:       'Rajdhani', sans-serif;
   --font-mono:     'Space Mono', monospace;
   --font-serif:    'Cormorant Garamond', serif;
-  --audio-btn-bottom-offset: 158px; /* quick-play button sits above the dock area */
+  --music-dock-height: 140px;
+  --audio-btn-gap: 18px;
+  --audio-btn-bottom-offset: calc(var(--music-dock-height) + var(--audio-btn-gap)); /* quick-play above dock */
 }
 
 /* ── RESET ── */
@@ -828,7 +830,7 @@ body::-webkit-scrollbar-thumb { background: var(--clr-red); border-radius: 2px; 
 
   .section { padding: 60px 18px; }
   #audio-btn {
-    bottom: calc(var(--audio-btn-bottom-offset) + 18px + env(safe-area-inset-bottom));
+    bottom: calc(var(--audio-btn-bottom-offset) + env(safe-area-inset-bottom));
     right: 14px;
   }
   #music-dock { width: calc(100vw - 14px); }

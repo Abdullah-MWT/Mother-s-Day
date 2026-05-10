@@ -178,15 +178,28 @@ function setLanguage(lang) {
   audio.addEventListener('ended', () => nextTrack());
   audio.addEventListener('error', () => {
     const sources = trackSources();
-    if (sourceIndex + 1 < sources.length) {
-      sourceIndex += 1;
-      audio.src = sources[sourceIndex];
-      audio.load();
-      setStatus('بیک اَپ سورس سے چلایا جا رہا ہے', 'Playing from backup source');
-      if (playing) playTrack();
+    if (!sources.length) {
+      playing = false;
+      syncPlayUi(false);
+      setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
       return;
     }
+    const shouldResume = playing;
     playing = false;
+    if (sourceIndex + 1 < sources.length) {
+      sourceIndex += 1;
+      const backupSource = sources[sourceIndex];
+      if (!backupSource) {
+        syncPlayUi(false);
+        setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
+        return;
+      }
+      audio.src = backupSource;
+      audio.load();
+      setStatus('بیک اَپ سورس سے چلایا جا رہا ہے', 'Playing from backup source');
+      if (shouldResume) playTrack();
+      return;
+    }
     syncPlayUi(false);
     setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
   });

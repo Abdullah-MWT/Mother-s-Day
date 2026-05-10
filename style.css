@@ -22,6 +22,7 @@
   --font-ui:       'Rajdhani', sans-serif;
   --font-mono:     'Space Mono', monospace;
   --font-serif:    'Cormorant Garamond', serif;
+  --audio-btn-bottom-offset: 158px; /* quick-play button sits above the dock area */
 }
 
 /* ── RESET ── */
@@ -72,7 +73,7 @@ body::-webkit-scrollbar-thumb { background: var(--clr-red); border-radius: 2px; 
 /* ── AUDIO BUTTON ── */
 #audio-btn {
   position: fixed;
-  bottom: calc(158px + env(safe-area-inset-bottom));
+  bottom: calc(var(--audio-btn-bottom-offset) + env(safe-area-inset-bottom));
   right: 24px;
   z-index: 1000;
   width: 46px;
@@ -817,7 +818,7 @@ body::-webkit-scrollbar-thumb { background: var(--clr-red); border-radius: 2px; 
   }
 
   .cards-grid {
-    grid-template-columns: repeat(6, minmax(84vw, 1fr));
+    grid-template-columns: repeat(var(--story-card-count, 1), minmax(84vw, 1fr));
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-bottom: 10px;
@@ -827,7 +828,7 @@ body::-webkit-scrollbar-thumb { background: var(--clr-red); border-radius: 2px; 
 
   .section { padding: 60px 18px; }
   #audio-btn {
-    bottom: calc(176px + env(safe-area-inset-bottom));
+    bottom: calc(var(--audio-btn-bottom-offset) + 18px + env(safe-area-inset-bottom));
     right: 14px;
   }
   #music-dock { width: calc(100vw - 14px); }

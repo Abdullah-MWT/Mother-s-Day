@@ -3,9 +3,11 @@
    Mother's Day Cinematic Website — script.js
    ============================================================ */
 
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 const APP = {
   lang: 'ur',
-  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  reducedMotion: reducedMotionQuery.matches,
   liteMode: false,
 };
 
@@ -13,6 +15,7 @@ const PERF = {
   lowEnd: (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
     || (navigator.deviceMemory && navigator.deviceMemory <= 4),
 };
+const CANVAS_MOUSE_INFLUENCE = 0.00006;
 
 function vibrate(ms = 18) {
   if (navigator.vibrate) navigator.vibrate(ms);
@@ -25,8 +28,18 @@ function setLanguage(lang) {
   document.querySelectorAll('[data-en][data-ur]').forEach(el => {
     el.textContent = lang === 'ur' ? el.dataset.ur : el.dataset.en;
   });
+  document.querySelectorAll('#mood-select option[data-en][data-ur]').forEach(opt => {
+    opt.textContent = lang === 'ur' ? opt.dataset.ur : opt.dataset.en;
+  });
   const btn = document.getElementById('lang-toggle');
   if (btn) btn.textContent = lang === 'ur' ? 'EN' : 'اردو';
+
+  const terminalBody = document.getElementById('terminal-body');
+  if (terminalBody?.dataset.started === 'true') {
+    terminalBody.innerHTML = '';
+    terminalBody.dataset.started = 'false';
+    startTerminal();
+  }
 }
 
 (function initLanguageToggle() {
@@ -41,6 +54,7 @@ function setLanguage(lang) {
 
 /* ── 1. PLAYLIST AUDIO (Urdu/Hindi mood-based) ── */
 (function initAudioPlayer() {
+  if (typeof Audio === 'undefined') return;
   const tracksByMood = {
     dua: [
       { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'audio/maa-taare-zameen-par.mp3' },
@@ -93,7 +107,8 @@ function setLanguage(lang) {
   function loadTrack(newIndex = 0, autoPlay = false) {
     const list = playlist();
     if (!list.length) return;
-    index = (newIndex + list.length) % list.length;
+    const safeIndex = Number.isFinite(newIndex) ? newIndex : 0;
+    index = (safeIndex + list.length) % list.length;
     const t = list[index];
 
     if (els.title) els.title.textContent = t.title;
@@ -115,7 +130,7 @@ function setLanguage(lang) {
       setStatus('چل رہا ہے — امی کے نام 💖', 'Playing for Mom 💖');
     } catch (err) {
       playing = false;
-      setStatus('فائل نہیں ملی — براہ کرم audio فولڈر میں گانے شامل کریں', 'Track file missing — add songs in /audio');
+      setStatus('فائل نہیں ملی — براہ کرم آڈیو فولڈر میں گانے شامل کریں', 'Track file missing — add songs in /audio');
     }
   }
 
@@ -146,7 +161,7 @@ function setLanguage(lang) {
   audio.addEventListener('ended', () => nextTrack());
   audio.addEventListener('timeupdate', () => {
     if (!els.progress || !audio.duration) return;
-    els.progress.value = String((audio.currentTime / audio.duration) * 100);
+    els.progress.value = (audio.currentTime / audio.duration) * 100;
   });
 
   if (els.progress) {
@@ -218,8 +233,8 @@ function setLanguage(lang) {
       this.hue = Math.random() > 0.5 ? '#ff4d6d' : '#ff85a1';
     }
     update(mouse) {
-      this.x += this.vx + (mouse.x - W / 2) * 0.00006;
-      this.y += this.vy + (mouse.y - H / 2) * 0.00006;
+      this.x += this.vx + (mouse.x - W / 2) * CANVAS_MOUSE_INFLUENCE;
+      this.y += this.vy + (mouse.y - H / 2) * CANVAS_MOUSE_INFLUENCE;
       if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
     }
     draw() {
@@ -356,8 +371,12 @@ function setLanguage(lang) {
   const mainSite = document.getElementById('main-site');
 
   const lines = [
-    { text: 'امی کے پیار کی تلاش جاری…', status: 'احساسات اسکین ہو رہے ہیں' },
-    { text: 'قربانیوں کا حساب لگ رہا ہے…', status: 'یادیں لوڈ ہو رہی ہیں' },
+    { text: 'غیر مشروط محبت کی تلاش جاری…', status: 'احساسات اسکین ہو رہے ہیں' },
+    { text: 'تلاش جاری…', status: 'پروسیسنگ' },
+    { text: 'تلاش جاری…', status: 'گہرا اسکین شروع' },
+    { text: 'قربانیوں کا حساب لگ رہا ہے…', status: 'محبت کی پیمائش' },
+    { text: 'بے خواب راتیں لوڈ ہو رہی ہیں…', status: 'یادیں جمع ہو رہی ہیں' },
+    { text: 'صبر اور دعا کی سطح جانچی جا رہی ہے…', status: 'قریب ہے' },
     { text: '404 — ماں جیسا کوئی نہیں ملا۔', status: 'تلاش مکمل' },
   ];
 
@@ -382,7 +401,7 @@ function setLanguage(lang) {
     typeChar();
   }
 
-  const targetPercents = [24, 48, 76, 100];
+  const targetPercents = [12, 28, 40, 55, 72, 88, 100];
   let pIdx = 0;
   const progressTimer = setInterval(() => {
     if (pIdx < targetPercents.length) animateBar(targetPercents[pIdx++]);
@@ -457,6 +476,7 @@ function initTerminal() {
 function startTerminal() {
   const body = document.getElementById('terminal-body');
   if (!body) return;
+  body.dataset.started = 'true';
 
   const scripts = {
     ur: [
@@ -524,7 +544,7 @@ function startTerminal() {
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     hero.style.transform = `translateY(${y * 0.2}px)`;
-    hero.style.opacity = String(Math.max(0, 1 - y / 620));
+    hero.style.opacity = Math.max(0, 1 - y / 620);
   });
 })();
 
@@ -537,7 +557,7 @@ function startTerminal() {
 
   for (let i = 0; i < 24; i++) {
     const bar = document.createElement('span');
-    bar.style.setProperty('--h', String((Math.random() * 0.9 + 0.3).toFixed(2)));
+    bar.style.setProperty('--h', (Math.random() * 0.9 + 0.3).toFixed(2));
     bar.style.animationDelay = `${(i % 6) * 0.07}s`;
     waveform.appendChild(bar);
   }
@@ -552,7 +572,12 @@ function startTerminal() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(message);
-      utter.lang = APP.lang === 'ur' ? 'ur-PK' : 'en-US';
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const hasUrdu = voices.some(v => v.lang && v.lang.toLowerCase().startsWith('ur'));
+      utter.lang = APP.lang === 'ur' && hasUrdu ? 'ur-PK' : 'en-US';
+      if (APP.lang === 'ur' && !hasUrdu && text) {
+        text.textContent = 'نوٹ: براؤزر میں اردو آواز دستیاب نہیں، انگریزی آواز استعمال ہوگی۔';
+      }
       utter.rate = 0.9;
       utter.onend = () => waveform.classList.remove('active');
       window.speechSynthesis.speak(utter);
@@ -607,6 +632,7 @@ function startTerminal() {
   if (!heart || !final) return;
 
   let timer = null;
+  const BURST_COUNT = 22;
 
   function burst() {
     vibrate(45);
@@ -614,7 +640,7 @@ function startTerminal() {
       ? ['شکریہ', 'امی', 'محبت', 'دعا', 'رحمت']
       : ['Thanks', 'Mom', 'Love', 'Prayer', 'Mercy'];
 
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < BURST_COUNT; i++) {
       const span = document.createElement('span');
       span.textContent = words[i % words.length];
       span.style.position = 'absolute';
@@ -666,6 +692,25 @@ function startTerminal() {
   });
 
   syncUi();
+})();
+
+(function initAdaptiveSignals() {
+  reducedMotionQuery.addEventListener('change', e => {
+    APP.reducedMotion = e.matches;
+    if (APP.reducedMotion) {
+      APP.liteMode = true;
+      document.body.classList.add('reduced-motion');
+    }
+  });
+
+  const cards = document.querySelectorAll('.cards-grid .card').length;
+  document.documentElement.style.setProperty('--story-card-count', String(cards || 1));
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      window.speechSynthesis.getVoices();
+    });
+  }
 })();
 
 /* ── 12. SMOOTH SCROLL for anchors ── */

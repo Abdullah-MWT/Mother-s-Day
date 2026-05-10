@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — No One Like Mom Found</title>
+  <meta name="description" content="A cinematic Mother's Day experience made with love." />
+
+  <!-- Favicon: inline SVG heart -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== LOADING SCREEN ===================== -->
+  <div id="loading-screen">
+    <div class="loader-content">
+      <div class="loader-icon">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M30 52s-22-14-22-28a14 14 0 0128 0 14 14 0 0128 0c0 14-22 28-22 28z" stroke="#ff4d6d" stroke-width="2" fill="none" class="heart-svg"/>
+        </svg>
+      </div>
+      <div id="loader-text" class="loader-text"></div>
+      <div class="loader-bar-wrap">
+        <div class="loader-bar" id="loader-bar"></div>
+        <span id="loader-percent">0%</span>
+      </div>
+      <div class="loader-status" id="loader-status">INITIALIZING…</div>
+    </div>
+  </div>
+
+  <!-- ===================== CANVAS (particles) ===================== -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- ===================== CURSOR GLOW ===================== -->
+  <div id="cursor-glow"></div>
+
+  <!-- ===================== AUDIO ===================== -->
+  <div id="audio-btn" title="Toggle Music">
+    <span id="audio-icon">♪</span>
+  </div>
+
+  <!-- ===================== MAIN SITE ===================== -->
+  <main id="main-site" class="hidden">
+
+    <!-- SCROLL INDICATOR -->
+    <div class="scroll-indicator" id="scroll-indicator">
+      <div class="scroll-line"></div>
+      <span>scroll</span>
+    </div>
+
+    <!-- ===== HERO ===== -->
+    <section class="section hero-section" id="hero">
+      <div class="hero-inner">
+        <div class="glitch-wrap">
+          <h1 class="glitch" data-text="404">404</h1>
+        </div>
+        <p class="hero-sub">ERROR</p>
+        <h2 class="hero-title reveal-text" id="hero-title">No One Like Mom Found.</h2>
+        <div class="hero-lines" id="hero-lines">
+          <p class="hero-line" style="--d:0.4s">Not in databases.</p>
+          <p class="hero-line" style="--d:0.9s">Not in algorithms.</p>
+          <p class="hero-line" style="--d:1.4s">Not in this world.</p>
+        </div>
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>SYSTEM SEARCH: COMPLETE — NO MATCH FOUND</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STORY CARDS ===== -->
+    <section class="section story-section" id="story">
+      <div class="section-label">// emotional.log</div>
+      <h2 class="section-heading">What the databases missed.</h2>
+
+      <div class="cards-grid">
+
+        <div class="card scroll-reveal" data-delay="0">
+          <div class="card-icon">🌙</div>
+          <p class="card-text">"She stayed awake so I could sleep peacefully."</p>
+          <div class="card-line"></div>
+        </div>
+
+        <div class="card scroll-reveal" data-delay="100">
+          <div class="card-icon">✨</div>
+          <p class="card-text">"She believed in me before I believed in myself."</p>
+          <div class="card-line"></div>
+        </div>
+
+        <div class="card scroll-reveal" data-delay="200">
+          <div class="card-icon">🤲</div>
+          <p class="card-text">"She made sacrifices I never noticed — and never asked me to."</p>
+          <div class="card-line"></div>
+        </div>
+
+        <div class="card scroll-reveal" data-delay="300">
+          <div class="card-icon">🌸</div>
+          <p class="card-text">"She prayed for me in the silence of the night."</p>
+          <div class="card-line"></div>
+        </div>
+
+        <div class="card scroll-reveal" data-delay="400">
+          <div class="card-icon">🏠</div>
+          <p class="card-text">"She turned every house we lived in into a home."</p>
+          <div class="card-line"></div>
+        </div>
+
+        <div class="card scroll-reveal" data-delay="500">
+          <div class="card-icon">💻</div>
+          <p class="card-text">"No technology, no AI, no algorithm — can replicate her love."</p>
+          <div class="card-line"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== TERMINAL ===== -->
+    <section class="section terminal-section" id="terminal">
+      <div class="section-label">// dev.terminal</div>
+      <div class="terminal-window scroll-reveal" data-delay="0">
+        <div class="terminal-bar">
+          <span class="t-dot red"></span>
+          <span class="t-dot yellow"></span>
+          <span class="t-dot green"></span>
+          <span class="t-title">son@heart: ~</span>
+        </div>
+        <div class="terminal-body" id="terminal-body">
+          <!-- typed by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FINAL ===== -->
+    <section class="section final-section" id="final">
+      <div class="final-inner scroll-reveal" data-delay="0">
+        <div class="final-heart" id="final-heart">❤️</div>
+        <p class="final-label">// final_output.exe</p>
+        <h2 class="final-heading">
+          To the woman no AI, no algorithm,<br/>and no technology can ever replace.
+        </h2>
+        <div class="final-divider"></div>
+        <p class="final-wish">Happy Mother's Day</p>
+        <p class="final-heart-text">❤️</p>
+        <p class="final-from">— made with love, by your son</p>
+        <div class="final-particles" id="final-particles"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

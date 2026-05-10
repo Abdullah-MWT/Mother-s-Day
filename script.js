@@ -144,7 +144,7 @@ function setLanguage(lang) {
     } catch (err) {
       playing = false;
       syncPlayUi(false);
-      if (err?.name === 'NotAllowedError') {
+      if (err && err.name === 'NotAllowedError') {
         setStatus('پلے کے لیے دوبارہ بٹن دبائیں', 'Tap play again to allow audio');
       } else {
         setStatus('یہ ٹریک لوڈ نہیں ہو سکا', 'Unable to load this track');
@@ -184,7 +184,7 @@ function setLanguage(lang) {
       setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
       return;
     }
-    const shouldResume = !audio.paused;
+    const shouldResume = playing || !audio.paused;
     playing = false;
     if (sourceIndex + 1 < sources.length) {
       sourceIndex += 1;

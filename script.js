@@ -184,17 +184,11 @@ function setLanguage(lang) {
       setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
       return;
     }
-    const shouldResume = playing;
+    const shouldResume = !audio.paused;
     playing = false;
     if (sourceIndex + 1 < sources.length) {
       sourceIndex += 1;
-      const backupSource = sources[sourceIndex];
-      if (!backupSource) {
-        syncPlayUi(false);
-        setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
-        return;
-      }
-      audio.src = backupSource;
+      audio.src = sources[sourceIndex];
       audio.load();
       setStatus('بیک اَپ سورس سے چلایا جا رہا ہے', 'Playing from backup source');
       if (shouldResume) playTrack();
@@ -606,16 +600,17 @@ function startTerminal() {
     const sequence = [392, 440, 523.25, 659.25];
     const stepMs = 220;
     sequence.forEach((freq, i) => {
+      const startTime = ctx.currentTime + i * (stepMs / 1000);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * (stepMs / 1000));
-      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + i * (stepMs / 1000) + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * (stepMs / 1000) + 0.2);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.16, startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.2);
       osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + i * (stepMs / 1000));
-      osc.stop(ctx.currentTime + i * (stepMs / 1000) + (stepMs / 1000));
+      osc.start(startTime);
+      osc.stop(startTime + (stepMs / 1000));
     });
     const closeAfterMs = (sequence.length * stepMs) + 200;
     return new Promise(resolve => {

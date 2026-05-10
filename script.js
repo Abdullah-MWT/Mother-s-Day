@@ -57,19 +57,19 @@ function setLanguage(lang) {
   if (typeof Audio === 'undefined') return;
   const tracksByMood = {
     dua: [
-      { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'audio/maa-taare-zameen-par.mp3' },
-      { title: 'Luka Chuppi (Rang De Basanti)', artist: 'Lata Mangeshkar & A.R. Rahman', src: 'audio/luka-chuppi.mp3' },
-      { title: 'Tu Kitni Achhi Hai', artist: 'Lata Mangeshkar', src: 'audio/tu-kitni-achhi-hai.mp3' },
+      { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'audio/maa-taare-zameen-par.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { title: 'Luka Chuppi (Rang De Basanti)', artist: 'Lata Mangeshkar & A.R. Rahman', src: 'audio/luka-chuppi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+      { title: 'Tu Kitni Achhi Hai', artist: 'Lata Mangeshkar', src: 'audio/tu-kitni-achhi-hai.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
     ],
     nostalgia: [
-      { title: 'Meri Duniya Tu Hi Re Maa', artist: 'Hindi/Urdu Tribute', src: 'audio/meri-duniya-tu-hi-re-maa.mp3' },
-      { title: 'Aye Maa (Coke Studio style)', artist: 'Urdu Tribute', src: 'audio/aye-maa-tribute.mp3' },
-      { title: 'Maa Da Ladla (Soft Reprise)', artist: 'Tribute Mix', src: 'audio/maa-da-ladla-reprise.mp3' },
+      { title: 'Meri Duniya Tu Hi Re Maa', artist: 'Hindi/Urdu Tribute', src: 'audio/meri-duniya-tu-hi-re-maa.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+      { title: 'Aye Maa (Coke Studio style)', artist: 'Urdu Tribute', src: 'audio/aye-maa-tribute.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+      { title: 'Maa Da Ladla (Soft Reprise)', artist: 'Tribute Mix', src: 'audio/maa-da-ladla-reprise.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
     ],
     celebration: [
-      { title: 'Maa Meri Jaan', artist: 'Celebration Mix', src: 'audio/maa-meri-jaan.mp3' },
-      { title: 'Ammi Jan Ke Naam', artist: 'Urdu Pop Tribute', src: 'audio/ammi-jan-ke-naam.mp3' },
-      { title: 'Shukriya Ammi', artist: 'Hindi-Urdu Acoustic', src: 'audio/shukriya-ammi.mp3' },
+      { title: 'Maa Meri Jaan', artist: 'Celebration Mix', src: 'audio/maa-meri-jaan.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
+      { title: 'Ammi Jan Ke Naam', artist: 'Urdu Pop Tribute', src: 'audio/ammi-jan-ke-naam.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
+      { title: 'Shukriya Ammi', artist: 'Hindi-Urdu Acoustic', src: 'audio/shukriya-ammi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
     ],
   };
 
@@ -79,6 +79,8 @@ function setLanguage(lang) {
   let mood = 'dua';
   let index = 0;
   let playing = false;
+  let activeTrack = null;
+  let sourceIndex = 0;
 
   const els = {
     quickBtn: document.getElementById('audio-btn'),
@@ -104,6 +106,16 @@ function setLanguage(lang) {
     els.status.textContent = APP.lang === 'ur' ? ur : en;
   }
 
+  function trackSources() {
+    if (!activeTrack) return [];
+    return [activeTrack.src, activeTrack.fallbackSrc].filter(Boolean);
+  }
+
+  function syncPlayUi(isPlaying) {
+    if (els.quickIcon) els.quickIcon.textContent = isPlaying ? '⏸' : '▶';
+    if (els.playBtn) els.playBtn.textContent = isPlaying ? '⏸' : '▶';
+  }
+
   function loadTrack(newIndex = 0, autoPlay = false) {
     const list = playlist();
     if (!list.length) return;
@@ -114,7 +126,9 @@ function setLanguage(lang) {
     if (els.title) els.title.textContent = t.title;
     if (els.artist) els.artist.textContent = t.artist;
 
-    audio.src = t.src;
+    activeTrack = t;
+    sourceIndex = 0;
+    audio.src = trackSources()[sourceIndex] || '';
     audio.load();
     setStatus('منتخب گانا تیار ہے', 'Selected track is ready');
 
@@ -125,20 +139,23 @@ function setLanguage(lang) {
     try {
       await audio.play();
       playing = true;
-      if (els.quickIcon) els.quickIcon.textContent = '⏸';
-      if (els.playBtn) els.playBtn.textContent = '⏸';
+      syncPlayUi(true);
       setStatus('چل رہا ہے — امی کے نام 💖', 'Playing for Mom 💖');
     } catch (err) {
       playing = false;
-      setStatus('فائل نہیں ملی — براہ کرم آڈیو فولڈر میں گانے شامل کریں', 'Track file missing — add songs in /audio');
+      syncPlayUi(false);
+      if (err?.name === 'NotAllowedError') {
+        setStatus('پلے کے لیے دوبارہ بٹن دبائیں', 'Tap play again to allow audio');
+      } else {
+        setStatus('یہ ٹریک لوڈ نہیں ہو سکا', 'Unable to load this track');
+      }
     }
   }
 
   function pauseTrack() {
     audio.pause();
     playing = false;
-    if (els.quickIcon) els.quickIcon.textContent = '▶';
-    if (els.playBtn) els.playBtn.textContent = '▶';
+    syncPlayUi(false);
     setStatus('روک دیا گیا', 'Paused');
   }
 
@@ -159,6 +176,20 @@ function setLanguage(lang) {
   }
 
   audio.addEventListener('ended', () => nextTrack());
+  audio.addEventListener('error', () => {
+    const sources = trackSources();
+    if (sourceIndex + 1 < sources.length) {
+      sourceIndex += 1;
+      audio.src = sources[sourceIndex];
+      audio.load();
+      setStatus('بیک اَپ سورس سے چلایا جا رہا ہے', 'Playing from backup source');
+      if (playing) playTrack();
+      return;
+    }
+    playing = false;
+    syncPlayUi(false);
+    setStatus('یہ گانا دستیاب نہیں', 'This track is unavailable');
+  });
   audio.addEventListener('timeupdate', () => {
     if (!els.progress || !audio.duration) return;
     els.progress.value = (audio.currentTime / audio.duration) * 100;
@@ -555,6 +586,26 @@ function startTerminal() {
   const text = document.getElementById('voice-text');
   if (!btn || !waveform) return;
 
+  async function playFallbackTone() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const sequence = [392, 440, 523.25, 659.25];
+    sequence.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + i * 0.22 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.22 + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.22);
+      osc.stop(ctx.currentTime + i * 0.22 + 0.22);
+    });
+    setTimeout(() => ctx.close(), 1200);
+  }
+
   for (let i = 0; i < 24; i++) {
     const bar = document.createElement('span');
     bar.style.setProperty('--h', (Math.random() * 0.9 + 0.3).toFixed(2));
@@ -582,9 +633,13 @@ function startTerminal() {
       }
       utter.rate = 0.9;
       utter.onend = () => waveform.classList.remove('active');
+      utter.onerror = async () => {
+        await playFallbackTone();
+        waveform.classList.remove('active');
+      };
       window.speechSynthesis.speak(utter);
     } else {
-      setTimeout(() => waveform.classList.remove('active'), 3200);
+      playFallbackTone().finally(() => waveform.classList.remove('active'));
     }
 
     if (text) text.textContent = APP.lang === 'ur' ? 'دل سے: شکریہ امی 💖' : 'From the heart: Thank you Mom 💖';

@@ -57,19 +57,19 @@ function setLanguage(lang) {
   if (typeof Audio === 'undefined') return;
   const tracksByMood = {
     dua: [
-      { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'audio/maa-taare-zameen-par.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { title: 'Luka Chuppi (Rang De Basanti)', artist: 'Lata Mangeshkar & A.R. Rahman', src: 'audio/luka-chuppi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-      { title: 'Tu Kitni Achhi Hai', artist: 'Lata Mangeshkar', src: 'audio/tu-kitni-achhi-hai.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+      { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'Audio/maa-taare-zameen-par.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { title: 'Luka Chuppi (Rang De Basanti)', artist: 'Lata Mangeshkar & A.R. Rahman', src: 'Audio/luka-chuppi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+      { title: 'Tu Kitni Achhi Hai', artist: 'Lata Mangeshkar', src: 'Audio/tu-kitni-achhi-hai.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
     ],
     nostalgia: [
-      { title: 'Meri Duniya Tu Hi Re Maa', artist: 'Hindi/Urdu Tribute', src: 'audio/meri-duniya-tu-hi-re-maa.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-      { title: 'Aye Maa (Coke Studio style)', artist: 'Urdu Tribute', src: 'audio/aye-maa-tribute.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-      { title: 'Maa Da Ladla (Soft Reprise)', artist: 'Tribute Mix', src: 'audio/maa-da-ladla-reprise.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
+      { title: 'Meri Duniya Tu Hi Re Maa', artist: 'Hindi/Urdu Tribute', src: 'Audio/meri-duniya-tu-hi-re-maa.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+      { title: 'Aye Maa (Coke Studio style)', artist: 'Urdu Tribute', src: 'Audio/aye-maa-tribute.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+      { title: 'Maa Da Ladla (Soft Reprise)', artist: 'Tribute Mix', src: 'Audio/maa-da-ladla-reprise.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
     ],
     celebration: [
-      { title: 'Maa Meri Jaan', artist: 'Celebration Mix', src: 'audio/maa-meri-jaan.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
-      { title: 'Ammi Jan Ke Naam', artist: 'Urdu Pop Tribute', src: 'audio/ammi-jan-ke-naam.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-      { title: 'Shukriya Ammi', artist: 'Hindi-Urdu Acoustic', src: 'audio/shukriya-ammi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
+      { title: 'Maa Meri Jaan', artist: 'Celebration Mix', src: 'Audio/maa-meri-jaan.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
+      { title: 'Ammi Jan Ke Naam', artist: 'Urdu Pop Tribute', src: 'Audio/ammi-jan-ke-naam.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
+      { title: 'Shukriya Ammi', artist: 'Hindi-Urdu Acoustic', src: 'Audio/shukriya-ammi.mp3', fallbackSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
     ],
   };
 

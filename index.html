@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <button id="lang-toggle" aria-label="Toggle language">اردو</button>
 
   <!-- ===================== LOADING SCREEN ===================== -->
   <div id="loading-screen">
@@ -43,7 +44,28 @@
 
   <!-- ===================== AUDIO ===================== -->
   <div id="audio-btn" title="Toggle Music">
-    <span id="audio-icon">♪</span>
+    <span id="audio-icon">▶</span>
+  </div>
+  <div id="music-dock" aria-label="Music Player">
+    <div class="dock-row">
+      <div class="dock-track">
+        <p id="track-title" data-en="No track selected" data-ur="کوئی گانا منتخب نہیں">کوئی گانا منتخب نہیں</p>
+        <p id="track-artist">—</p>
+      </div>
+      <select id="mood-select" aria-label="Mood mode">
+        <option value="dua">دعا موڈ</option>
+        <option value="nostalgia">یادیں موڈ</option>
+        <option value="celebration">جشن موڈ</option>
+      </select>
+    </div>
+    <div class="dock-row controls">
+      <button id="prev-btn" aria-label="Previous">⏮</button>
+      <button id="play-btn" aria-label="Play Pause">▶</button>
+      <button id="next-btn" aria-label="Next">⏭</button>
+      <button id="lite-mode-btn" aria-label="Reduce Motion">سادہ</button>
+    </div>
+    <input id="track-progress" type="range" min="0" max="100" value="0" aria-label="Track progress" />
+    <p id="audio-status" data-en="Touch to play playlist. Thanks Ammi 💖" data-ur="پلے کرنے کے لیے ٹچ کریں — شکریہ امی 💖">پلے کرنے کے لیے ٹچ کریں — شکریہ امی 💖</p>
   </div>
 
   <!-- ===================== MAIN SITE ===================== -->
@@ -62,15 +84,15 @@
           <h1 class="glitch" data-text="404">404</h1>
         </div>
         <p class="hero-sub">ERROR</p>
-        <h2 class="hero-title reveal-text" id="hero-title">No One Like Mom Found.</h2>
+        <h2 class="hero-title reveal-text" id="hero-title" data-en="No One Like Mom Found." data-ur="ماں جیسا کوئی نہیں ملا۔">ماں جیسا کوئی نہیں ملا۔</h2>
         <div class="hero-lines" id="hero-lines">
-          <p class="hero-line" style="--d:0.4s">Not in databases.</p>
-          <p class="hero-line" style="--d:0.9s">Not in algorithms.</p>
-          <p class="hero-line" style="--d:1.4s">Not in this world.</p>
+          <p class="hero-line" style="--d:0.4s" data-en="Not in databases." data-ur="ڈیٹا بیس میں نہیں۔">ڈیٹا بیس میں نہیں۔</p>
+          <p class="hero-line" style="--d:0.9s" data-en="Not in algorithms." data-ur="الگورتھم میں نہیں۔">الگورتھم میں نہیں۔</p>
+          <p class="hero-line" style="--d:1.4s" data-en="Not in this world." data-ur="اس دنیا میں بھی نہیں۔">اس دنیا میں بھی نہیں۔</p>
         </div>
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          <span>SYSTEM SEARCH: COMPLETE — NO MATCH FOUND</span>
+          <span data-en="SYSTEM SEARCH: COMPLETE — NO MATCH FOUND" data-ur="سسٹم تلاش مکمل — کوئی مماثلت نہیں ملی">سسٹم تلاش مکمل — کوئی مماثلت نہیں ملی</span>
         </div>
       </div>
     </section>
@@ -78,43 +100,43 @@
     <!-- ===== STORY CARDS ===== -->
     <section class="section story-section" id="story">
       <div class="section-label">// emotional.log</div>
-      <h2 class="section-heading">What the databases missed.</h2>
+      <h2 class="section-heading" data-en="What the databases missed." data-ur="جو ڈیٹا بیس سمجھ نہ سکا۔">جو ڈیٹا بیس سمجھ نہ سکا۔</h2>
 
       <div class="cards-grid">
 
         <div class="card scroll-reveal" data-delay="0">
           <div class="card-icon">🌙</div>
-          <p class="card-text">"She stayed awake so I could sleep peacefully."</p>
+          <p class="card-text" data-en="She stayed awake so I could sleep peacefully." data-ur="وہ جاگتی رہی تاکہ میں سکون سے سو سکوں۔">وہ جاگتی رہی تاکہ میں سکون سے سو سکوں۔</p>
           <div class="card-line"></div>
         </div>
 
         <div class="card scroll-reveal" data-delay="100">
           <div class="card-icon">✨</div>
-          <p class="card-text">"She believed in me before I believed in myself."</p>
+          <p class="card-text" data-en="She believed in me before I believed in myself." data-ur="اُس نے مجھ پر تب یقین کیا جب مجھے خود پر نہیں تھا۔">اُس نے مجھ پر تب یقین کیا جب مجھے خود پر نہیں تھا۔</p>
           <div class="card-line"></div>
         </div>
 
         <div class="card scroll-reveal" data-delay="200">
           <div class="card-icon">🤲</div>
-          <p class="card-text">"She made sacrifices I never noticed — and never asked me to."</p>
+          <p class="card-text" data-en="She made sacrifices I never noticed — and never asked me to." data-ur="اُس نے وہ قربانیاں دیں جو میں سمجھ بھی نہ سکا۔">اُس نے وہ قربانیاں دیں جو میں سمجھ بھی نہ سکا۔</p>
           <div class="card-line"></div>
         </div>
 
         <div class="card scroll-reveal" data-delay="300">
           <div class="card-icon">🌸</div>
-          <p class="card-text">"She prayed for me in the silence of the night."</p>
+          <p class="card-text" data-en="She prayed for me in the silence of the night." data-ur="رات کی خاموشی میں اُس کی دعائیں میرے لیے تھیں۔">رات کی خاموشی میں اُس کی دعائیں میرے لیے تھیں۔</p>
           <div class="card-line"></div>
         </div>
 
         <div class="card scroll-reveal" data-delay="400">
           <div class="card-icon">🏠</div>
-          <p class="card-text">"She turned every house we lived in into a home."</p>
+          <p class="card-text" data-en="She turned every house we lived in into a home." data-ur="اُس نے ہر مکان کو گھر بنایا۔">اُس نے ہر مکان کو گھر بنایا۔</p>
           <div class="card-line"></div>
         </div>
 
         <div class="card scroll-reveal" data-delay="500">
           <div class="card-icon">💻</div>
-          <p class="card-text">"No technology, no AI, no algorithm — can replicate her love."</p>
+          <p class="card-text" data-en="No technology, no AI, no algorithm can replicate her love." data-ur="کوئی ٹیکنالوجی، کوئی اے آئی، کوئی الگورتھم اُس کا پیار نہیں بنا سکتا۔">کوئی ٹیکنالوجی، کوئی اے آئی، کوئی الگورتھم اُس کا پیار نہیں بنا سکتا۔</p>
           <div class="card-line"></div>
         </div>
 
@@ -137,6 +159,17 @@
       </div>
     </section>
 
+    <!-- ===== VOICE NOTE ===== -->
+    <section class="section voice-section" id="voice-note">
+      <div class="section-label">// voice.note</div>
+      <h2 class="section-heading" data-en="A voice note for Ammi." data-ur="امی کے لیے آواز کا پیغام۔">امی کے لیے آواز کا پیغام۔</h2>
+      <div class="voice-card scroll-reveal" data-delay="0">
+        <p id="voice-text" data-en="Tap to hear my thank-you message." data-ur="میرا شکریہ سننے کے لیے بٹن دبائیں۔">میرا شکریہ سننے کے لیے بٹن دبائیں۔</p>
+        <button id="voice-play-btn">پیغام سنیں</button>
+        <div id="waveform" aria-hidden="true"></div>
+      </div>
+    </section>
+
     <!-- ===== FINAL ===== -->
     <section class="section final-section" id="final">
       <div class="final-inner scroll-reveal" data-delay="0">
@@ -146,14 +179,15 @@
           To the woman no AI, no algorithm,<br/>and no technology can ever replace.
         </h2>
         <div class="final-divider"></div>
-        <p class="final-wish">Happy Mother's Day</p>
+        <p class="final-wish" data-en="Happy Mother's Day" data-ur="ماں کا دن مبارک">ماں کا دن مبارک</p>
         <p class="final-heart-text">❤️</p>
-        <p class="final-from">— made with love, by your son</p>
+        <p class="final-from" data-en="— made with love, by your son" data-ur="— آپ کے بیٹے کی طرف سے محبت کے ساتھ">— آپ کے بیٹے کی طرف سے محبت کے ساتھ</p>
         <div class="final-particles" id="final-particles"></div>
       </div>
     </section>
 
   </main>
+  <div id="memory-toast" role="status" aria-live="polite"></div>
 
   <script src="script.js"></script>
 </body>

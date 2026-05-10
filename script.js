@@ -3,117 +3,238 @@
    Mother's Day Cinematic Website — script.js
    ============================================================ */
 
-/* ── 1. AUDIO SETUP (Web Audio API — no external file needed) ── */
-(function initAudio() {
-  let ctx, masterGain, muted = false, started = false;
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  // Create soft emotional piano melody with Web Audio API
-  function createTone(freq, startTime, duration, vol = 0.15) {
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, startTime);
-    gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(vol, startTime + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-    osc.start(startTime);
-    osc.stop(startTime + duration + 0.05);
+const APP = {
+  lang: 'ur',
+  reducedMotion: reducedMotionQuery.matches,
+  liteMode: false,
+};
+
+const PERF = {
+  isLowEndDevice: (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
+    || (navigator.deviceMemory && navigator.deviceMemory <= 4),
+};
+const CANVAS_MOUSE_INFLUENCE = 0.00006;
+
+function vibrate(ms = 18) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+function setLanguage(lang) {
+  APP.lang = lang;
+  document.body.classList.toggle('lang-en', lang === 'en');
+  document.body.classList.toggle('lang-ur', lang === 'ur');
+  document.querySelectorAll('[data-en][data-ur]').forEach(el => {
+    el.textContent = lang === 'ur' ? el.dataset.ur : el.dataset.en;
+  });
+  document.querySelectorAll('#mood-select option[data-en][data-ur]').forEach(opt => {
+    opt.textContent = lang === 'ur' ? opt.dataset.ur : opt.dataset.en;
+  });
+  const btn = document.getElementById('lang-toggle');
+  if (btn) btn.textContent = lang === 'ur' ? 'EN' : 'اردو';
+
+  const terminalBody = document.getElementById('terminal-body');
+  if (terminalBody?.dataset.started === 'true') {
+    terminalBody.innerHTML = '';
+    terminalBody.dataset.started = 'false';
+    startTerminal();
+  }
+}
+
+(function initLanguageToggle() {
+  const btn = document.getElementById('lang-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    setLanguage(APP.lang === 'ur' ? 'en' : 'ur');
+    vibrate(24);
+  });
+  setLanguage('ur');
+})();
+
+/* ── 1. PLAYLIST AUDIO (Urdu/Hindi mood-based) ── */
+(function initAudioPlayer() {
+  if (typeof Audio === 'undefined') return;
+  const tracksByMood = {
+    dua: [
+      { title: 'Maa (Taare Zameen Par)', artist: 'Shankar Mahadevan', src: 'audio/maa-taare-zameen-par.mp3' },
+      { title: 'Luka Chuppi (Rang De Basanti)', artist: 'Lata Mangeshkar & A.R. Rahman', src: 'audio/luka-chuppi.mp3' },
+      { title: 'Tu Kitni Achhi Hai', artist: 'Lata Mangeshkar', src: 'audio/tu-kitni-achhi-hai.mp3' },
+    ],
+    nostalgia: [
+      { title: 'Meri Duniya Tu Hi Re Maa', artist: 'Hindi/Urdu Tribute', src: 'audio/meri-duniya-tu-hi-re-maa.mp3' },
+      { title: 'Aye Maa (Coke Studio style)', artist: 'Urdu Tribute', src: 'audio/aye-maa-tribute.mp3' },
+      { title: 'Maa Da Ladla (Soft Reprise)', artist: 'Tribute Mix', src: 'audio/maa-da-ladla-reprise.mp3' },
+    ],
+    celebration: [
+      { title: 'Maa Meri Jaan', artist: 'Celebration Mix', src: 'audio/maa-meri-jaan.mp3' },
+      { title: 'Ammi Jan Ke Naam', artist: 'Urdu Pop Tribute', src: 'audio/ammi-jan-ke-naam.mp3' },
+      { title: 'Shukriya Ammi', artist: 'Hindi-Urdu Acoustic', src: 'audio/shukriya-ammi.mp3' },
+    ],
+  };
+
+  const audio = new Audio();
+  audio.preload = 'metadata';
+
+  let mood = 'dua';
+  let index = 0;
+  let playing = false;
+
+  const els = {
+    quickBtn: document.getElementById('audio-btn'),
+    quickIcon: document.getElementById('audio-icon'),
+    playBtn: document.getElementById('play-btn'),
+    prevBtn: document.getElementById('prev-btn'),
+    nextBtn: document.getElementById('next-btn'),
+    moodSelect: document.getElementById('mood-select'),
+    title: document.getElementById('track-title'),
+    artist: document.getElementById('track-artist'),
+    status: document.getElementById('audio-status'),
+    progress: document.getElementById('track-progress'),
+  };
+
+  function playlist() {
+    return tracksByMood[mood] || [];
   }
 
-  // A tender, repeating arpeggiated melody (Am → F → C → G)
-  const melody = [
-    // Am
-    [220.0, 0.0,  1.0, 0.08], [261.6, 0.35, 0.8, 0.06], [329.6, 0.7, 0.8, 0.06],
-    // F
-    [174.6, 1.2,  1.0, 0.08], [220.0, 1.55, 0.8, 0.06], [261.6, 1.9, 0.8, 0.06],
-    // C
-    [130.8, 2.4,  1.0, 0.08], [164.8, 2.75, 0.8, 0.06], [220.0, 3.1, 0.8, 0.06],
-    // G
-    [196.0, 3.6,  1.0, 0.08], [246.9, 3.95, 0.8, 0.06], [294.0, 4.3, 0.8, 0.06],
-    // Am high
-    [440.0, 4.8,  1.2, 0.07], [392.0, 5.2, 1.0, 0.05], [349.2, 5.7, 1.0, 0.05],
-    // F high
-    [349.2, 6.4,  0.9, 0.07], [329.6, 6.8, 0.8, 0.05], [294.0, 7.2, 0.8, 0.05],
-    // C high
-    [261.6, 7.8,  0.9, 0.07], [246.9, 8.2, 0.8, 0.05], [220.0, 8.6, 0.8, 0.05],
-    // G high
-    [196.0, 9.2,  1.2, 0.07], [220.0, 9.7, 0.8, 0.05], [246.9,10.2, 1.4, 0.06],
-  ];
-  const LOOP_DUR = 12; // seconds
+  function setStatus(ur, en) {
+    if (!els.status) return;
+    els.status.dataset.ur = ur;
+    els.status.dataset.en = en;
+    els.status.textContent = APP.lang === 'ur' ? ur : en;
+  }
 
-  function scheduleMelody(offset) {
-    melody.forEach(([freq, t, dur, vol]) => {
-      createTone(freq, ctx.currentTime + offset + t, dur, vol);
+  function loadTrack(newIndex = 0, autoPlay = false) {
+    const list = playlist();
+    if (!list.length) return;
+    const safeIndex = Number.isFinite(newIndex) ? newIndex : 0;
+    index = (safeIndex + list.length) % list.length;
+    const t = list[index];
+
+    if (els.title) els.title.textContent = t.title;
+    if (els.artist) els.artist.textContent = t.artist;
+
+    audio.src = t.src;
+    audio.load();
+    setStatus('منتخب گانا تیار ہے', 'Selected track is ready');
+
+    if (autoPlay) playTrack();
+  }
+
+  async function playTrack() {
+    try {
+      await audio.play();
+      playing = true;
+      if (els.quickIcon) els.quickIcon.textContent = '⏸';
+      if (els.playBtn) els.playBtn.textContent = '⏸';
+      setStatus('چل رہا ہے — امی کے نام 💖', 'Playing for Mom 💖');
+    } catch (err) {
+      playing = false;
+      setStatus('فائل نہیں ملی — براہ کرم آڈیو فولڈر میں گانے شامل کریں', 'Track file missing — add songs in /audio');
+    }
+  }
+
+  function pauseTrack() {
+    audio.pause();
+    playing = false;
+    if (els.quickIcon) els.quickIcon.textContent = '▶';
+    if (els.playBtn) els.playBtn.textContent = '▶';
+    setStatus('روک دیا گیا', 'Paused');
+  }
+
+  function togglePlay() {
+    vibrate(20);
+    if (playing) pauseTrack();
+    else playTrack();
+  }
+
+  function nextTrack() {
+    loadTrack(index + 1, true);
+    vibrate(20);
+  }
+
+  function prevTrack() {
+    loadTrack(index - 1, true);
+    vibrate(20);
+  }
+
+  audio.addEventListener('ended', () => nextTrack());
+  audio.addEventListener('timeupdate', () => {
+    if (!els.progress || !audio.duration) return;
+    els.progress.value = (audio.currentTime / audio.duration) * 100;
+  });
+
+  if (els.progress) {
+    els.progress.addEventListener('input', () => {
+      if (!audio.duration) return;
+      audio.currentTime = (+els.progress.value / 100) * audio.duration;
     });
   }
 
-  function startMusic() {
-    if (started) return;
-    started = true;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0, ctx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 3.5);
-    masterGain.connect(ctx.destination);
-    scheduleMelody(0);
-    // Loop
-    setInterval(() => scheduleMelody(0), LOOP_DUR * 1000);
+  if (els.moodSelect) {
+    els.moodSelect.addEventListener('change', () => {
+      mood = els.moodSelect.value;
+      index = 0;
+      loadTrack(0, playing);
+      setStatus('موڈ تبدیل ہوگیا', 'Mood changed');
+    });
   }
 
-  document.getElementById('audio-btn').addEventListener('click', () => {
-    if (!started) { startMusic(); }
-    muted = !muted;
-    if (ctx) {
-      masterGain.gain.cancelScheduledValues(ctx.currentTime);
-      masterGain.gain.setTargetAtTime(muted ? 0 : 0.55, ctx.currentTime, 0.5);
-    }
-    document.getElementById('audio-icon').textContent = muted ? '♪̶' : '♪';
-  });
+  els.playBtn?.addEventListener('click', togglePlay);
+  els.quickBtn?.addEventListener('click', togglePlay);
+  els.nextBtn?.addEventListener('click', nextTrack);
+  els.prevBtn?.addEventListener('click', prevTrack);
 
-  // Auto-start on first user interaction
-  const autoStart = () => { startMusic(); document.removeEventListener('touchstart', autoStart); document.removeEventListener('click', autoStart); };
+  const autoStart = () => {
+    if (!playing) playTrack();
+    document.removeEventListener('touchstart', autoStart);
+    document.removeEventListener('click', autoStart);
+  };
   document.addEventListener('click', autoStart, { once: true });
   document.addEventListener('touchstart', autoStart, { once: true });
+
+  loadTrack(0, false);
 })();
 
-
-/* ── 2. CANVAS BACKGROUND (particles, stars, hearts) ── */
+/* ── 2. CANVAS BACKGROUND ── */
 (function initCanvas() {
+  if (APP.reducedMotion) return;
+
   const canvas = document.getElementById('bg-canvas');
-  const ctx    = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   let W, H, particles = [], stars = [], hearts = [], grid = [];
 
+  const particleCount = PERF.isLowEndDevice || APP.liteMode ? 35 : 80;
+  const starCount = PERF.isLowEndDevice || APP.liteMode ? 80 : 160;
+  const heartCount = PERF.isLowEndDevice || APP.liteMode ? 8 : 16;
+
   function resize() {
-    W = canvas.width  = window.innerWidth;
+    W = canvas.width = window.innerWidth;
     H = canvas.height = window.innerHeight;
     buildGrid();
   }
 
-  // Grid lines
   function buildGrid() {
     grid = [];
-    const step = 80;
-    for (let x = 0; x < W; x += step) grid.push({ x1: x, y1: 0, x2: x, y2: H, vert: true });
-    for (let y = 0; y < H; y += step) grid.push({ x1: 0, y1: y, x2: W, y2: y, vert: false });
+    const step = PERF.isLowEndDevice || APP.liteMode ? 120 : 80;
+    for (let x = 0; x < W; x += step) grid.push({ x1: x, y1: 0, x2: x, y2: H });
+    for (let y = 0; y < H; y += step) grid.push({ x1: 0, y1: y, x2: W, y2: y });
   }
 
-  // Particles (glow dots)
   class Particle {
     constructor() { this.reset(); }
     reset() {
-      this.x  = Math.random() * W;
-      this.y  = Math.random() * H;
-      this.r  = Math.random() * 1.8 + 0.3;
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.r = Math.random() * 1.8 + 0.3;
       this.vx = (Math.random() - 0.5) * 0.25;
       this.vy = (Math.random() - 0.5) * 0.25;
       this.alpha = Math.random() * 0.5 + 0.2;
       this.hue = Math.random() > 0.5 ? '#ff4d6d' : '#ff85a1';
     }
-    update() {
-      this.x += this.vx + (mouse.x - W / 2) * 0.00008;
-      this.y += this.vy + (mouse.y - H / 2) * 0.00008;
+    update(mouse) {
+      this.x += this.vx + (mouse.x - W / 2) * CANVAS_MOUSE_INFLUENCE;
+      this.y += this.vy + (mouse.y - H / 2) * CANVAS_MOUSE_INFLUENCE;
       if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
     }
     draw() {
@@ -126,39 +247,36 @@
     }
   }
 
-  // Stars
   class Star {
     constructor() {
       this.x = Math.random() * W;
       this.y = Math.random() * H;
       this.r = Math.random() * 0.9 + 0.1;
-      this.alpha = Math.random();
       this.speed = Math.random() * 0.008 + 0.002;
       this.phase = Math.random() * Math.PI * 2;
     }
-    update() { this.alpha = 0.3 + 0.7 * Math.abs(Math.sin(Date.now() * this.speed + this.phase)); }
     draw() {
+      const alpha = 0.3 + 0.7 * Math.abs(Math.sin(Date.now() * this.speed + this.phase));
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.globalAlpha = this.alpha * 0.6;
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = alpha * 0.6;
       ctx.fill();
       ctx.globalAlpha = 1;
     }
   }
 
-  // Floating heart particles
   class FloatingHeart {
     constructor() { this.reset(); }
     reset() {
-      this.x    = Math.random() * W;
-      this.y    = H + 30;
+      this.x = Math.random() * W;
+      this.y = H + 30;
       this.size = Math.random() * 12 + 5;
-      this.speed= Math.random() * 0.5 + 0.2;
-      this.alpha= Math.random() * 0.25 + 0.05;
-      this.drift= (Math.random() - 0.5) * 0.5;
-      this.rot  = (Math.random() - 0.5) * 0.03;
-      this.angle= 0;
+      this.speed = Math.random() * 0.5 + 0.2;
+      this.alpha = Math.random() * 0.25 + 0.05;
+      this.drift = (Math.random() - 0.5) * 0.5;
+      this.rot = (Math.random() - 0.5) * 0.03;
+      this.angle = 0;
     }
     update() {
       this.y -= this.speed;
@@ -177,14 +295,12 @@
     }
   }
 
-  // Init collections
   function init() {
-    particles = Array.from({ length: 80  }, () => new Particle());
-    stars     = Array.from({ length: 160 }, () => new Star());
-    hearts    = Array.from({ length: 16  }, () => new FloatingHeart());
+    particles = Array.from({ length: particleCount }, () => new Particle());
+    stars = Array.from({ length: starCount }, () => new Star());
+    hearts = Array.from({ length: heartCount }, () => new FloatingHeart());
   }
 
-  // Mouse tracking
   const mouse = { x: 0, y: 0 };
   window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
   window.addEventListener('touchmove', e => {
@@ -192,11 +308,8 @@
     mouse.y = e.touches[0].clientY;
   }, { passive: true });
 
-  // Animate
   function animate() {
     ctx.clearRect(0, 0, W, H);
-
-    // Grid overlay (very subtle)
     ctx.strokeStyle = 'rgba(255,77,109,0.03)';
     ctx.lineWidth = 1;
     grid.forEach(g => {
@@ -206,27 +319,22 @@
       ctx.stroke();
     });
 
-    // Stars
-    stars.forEach(s => { s.update(); s.draw(); });
-
-    // Particles
-    particles.forEach(p => { p.update(); p.draw(); });
-
-    // Hearts
+    stars.forEach(s => s.draw());
+    particles.forEach(p => { p.update(mouse); p.draw(); });
     hearts.forEach(h => { h.update(); h.draw(); });
 
     requestAnimationFrame(animate);
   }
 
-  window.addEventListener('resize', () => { resize(); buildGrid(); });
+  window.addEventListener('resize', resize);
   resize();
   init();
   animate();
 })();
 
-
 /* ── 3. CURSOR GLOW ── */
 (function initCursor() {
+  if (window.innerWidth <= 600 || APP.reducedMotion) return;
   const cursor = document.getElementById('cursor-glow');
   let cx = 0, cy = 0, tx = 0, ty = 0;
 
@@ -236,55 +344,52 @@
     cx += (tx - cx) * 0.12;
     cy += (ty - cy) * 0.12;
     cursor.style.left = cx + 'px';
-    cursor.style.top  = cy + 'px';
+    cursor.style.top = cy + 'px';
     requestAnimationFrame(animateCursor);
   }
   animateCursor();
 
-  // Grow on hover over interactive elements
   document.querySelectorAll('a, button, .card, #audio-btn').forEach(el => {
     el.addEventListener('mouseenter', () => {
-      cursor.style.width  = '50px';
+      cursor.style.width = '50px';
       cursor.style.height = '50px';
     });
     el.addEventListener('mouseleave', () => {
-      cursor.style.width  = '22px';
+      cursor.style.width = '22px';
       cursor.style.height = '22px';
     });
   });
 })();
 
-
 /* ── 4. LOADING SCREEN ── */
 (function initLoader() {
-  const loaderText    = document.getElementById('loader-text');
-  const loaderBar     = document.getElementById('loader-bar');
+  const loaderText = document.getElementById('loader-text');
+  const loaderBar = document.getElementById('loader-bar');
   const loaderPercent = document.getElementById('loader-percent');
-  const loaderStatus  = document.getElementById('loader-status');
+  const loaderStatus = document.getElementById('loader-status');
   const loadingScreen = document.getElementById('loading-screen');
-  const mainSite      = document.getElementById('main-site');
+  const mainSite = document.getElementById('main-site');
 
   const lines = [
-    { text: 'Searching for someone who loves unconditionally…', status: 'SCANNING EMOTIONAL DATABASE' },
-    { text: 'Searching…',                                        status: 'PROCESSING' },
-    { text: 'Searching…',                                        status: 'DEEP SCAN INITIATED' },
-    { text: 'Analyzing sacrifices made…',                        status: 'QUANTIFYING LOVE' },
-    { text: 'Scanning sleepless nights…',                        status: 'LOADING MEMORIES' },
-    { text: 'Measuring unconditional patience…',                 status: 'ALMOST THERE' },
-    { text: '404 — No one like Mom found.',                      status: 'SEARCH COMPLETE' },
+    { text: 'غیر مشروط محبت کی تلاش جاری…', status: 'احساسات اسکین ہو رہے ہیں' },
+    { text: 'تلاش جاری…', status: 'پروسیسنگ' },
+    { text: 'تلاش جاری…', status: 'گہرا اسکین شروع' },
+    { text: 'قربانیوں کا حساب لگ رہا ہے…', status: 'محبت کی پیمائش' },
+    { text: 'بے خواب راتیں لوڈ ہو رہی ہیں…', status: 'یادیں جمع ہو رہی ہیں' },
+    { text: 'صبر اور دعا کی سطح جانچی جا رہی ہے…', status: 'قریب ہے' },
+    { text: '404 — ماں جیسا کوئی نہیں ملا۔', status: 'تلاش مکمل' },
   ];
 
   let lineIdx = 0, charIdx = 0, progress = 0;
-  let typingTimer, progressTimer;
 
   function typeChar() {
     const line = lines[lineIdx];
     if (charIdx < line.text.length) {
       loaderText.textContent += line.text[charIdx++];
-      typingTimer = setTimeout(typeChar, 38);
+      setTimeout(typeChar, 35);
     } else {
       loaderStatus.textContent = line.status;
-      setTimeout(nextLine, 600);
+      setTimeout(nextLine, 520);
     }
   }
 
@@ -296,15 +401,11 @@
     typeChar();
   }
 
-  // Animate progress bar
   const targetPercents = [12, 28, 40, 55, 72, 88, 100];
   let pIdx = 0;
-  progressTimer = setInterval(() => {
-    if (pIdx < targetPercents.length) {
-      const target = targetPercents[pIdx++];
-      animateBar(target);
-    }
-  }, 900);
+  const progressTimer = setInterval(() => {
+    if (pIdx < targetPercents.length) animateBar(targetPercents[pIdx++]);
+  }, 700);
 
   function animateBar(target) {
     const step = () => {
@@ -320,39 +421,34 @@
 
   function finishLoad() {
     clearInterval(progressTimer);
-    animateBar(100);
     setTimeout(() => {
       loadingScreen.classList.add('fade-out');
       mainSite.classList.remove('hidden');
       mainSite.classList.add('visible');
       setTimeout(() => {
         loadingScreen.style.display = 'none';
-        initTerminal(); // start terminal typing once visible
-      }, 1000);
-    }, 1200);
+        initTerminal();
+      }, 900);
+    }, 900);
   }
 
-  // Start
   typeChar();
 })();
 
-
-/* ── 5. SCROLL REVEAL (IntersectionObserver) ── */
+/* ── 5. SCROLL REVEAL ── */
 (function initScrollReveal() {
-  const observer = new IntersectionObserver((entries) => {
+  const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const el    = entry.target;
-        const delay = parseInt(el.dataset.delay || 0);
-        setTimeout(() => el.classList.add('in-view'), delay);
-        observer.unobserve(el);
-      }
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const delay = parseInt(el.dataset.delay || 0, 10);
+      setTimeout(() => el.classList.add('in-view'), delay);
+      observer.unobserve(el);
     });
   }, { threshold: 0.15 });
 
   document.querySelectorAll('.scroll-reveal, .card').forEach(el => observer.observe(el));
 
-  // Hide scroll indicator on first scroll
   const scrollInd = document.getElementById('scroll-indicator');
   if (scrollInd) {
     window.addEventListener('scroll', () => {
@@ -362,10 +458,9 @@
   }
 })();
 
-
 /* ── 6. TERMINAL TYPING EFFECT ── */
 function initTerminal() {
-  const termObs = new IntersectionObserver((entries) => {
+  const termObs = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         startTerminal();
@@ -381,30 +476,32 @@ function initTerminal() {
 function startTerminal() {
   const body = document.getElementById('terminal-body');
   if (!body) return;
+  body.dataset.started = 'true';
 
-  // Script: array of {type, text, delay_after}
-  const script = [
-    { cls: 't-cmd', text: '> initializing_search_protocol.exe',  pause: 600 },
-    { cls: 't-out', text: '\nSYSTEM: Ready. Searching global database…\n', pause: 400 },
-    { cls: 't-cmd', text: '\n> query --target "unconditional_love"', pause: 700 },
-    { cls: 't-out', text: '\nScanning 8 billion humans…\nScanning 900 billion records…\n', pause: 800 },
-    { cls: 't-err', text: '\nERROR: No match found in database.\n',        pause: 400 },
-    { cls: 't-cmd', text: '\n> search_mother_replacement.exe',             pause: 900 },
-    { cls: 't-out', text: '\nResult: ', pause: 0 },
-    { cls: 't-err', text: 'No replacement found.\n',                        pause: 600 },
-    { cls: 't-cmd', text: '\n> gratitude --level=infinite --target=mom',   pause: 800 },
-    { cls: 't-err', text: '\nERROR: Words are insufficient.\nWords are always insufficient.\n', pause: 500 },
-    { cls: 't-cmd', text: '\n> calculate_love_owed()',                      pause: 700 },
-    { cls: 't-out', text: '\nCalculating…\nCalculating…\n',                pause: 400 },
-    { cls: 't-err', text: 'OVERFLOW: Value exceeds maximum integer.\n',    pause: 600 },
-    { cls: 't-cmd', text: '\n> final_output --format=heart',               pause: 800 },
-    { cls: 't-love',text: '\n  Happy Mother\'s Day ❤️\n  You are irreplaceable.\n  404 — No one like you, ever.\n', pause: 0 },
-  ];
+  const scripts = {
+    ur: [
+      { cls: 't-cmd', text: '> mohabbat_scan.exe', pause: 560 },
+      { cls: 't-out', text: '\nسسٹم: تلاش شروع…\n', pause: 380 },
+      { cls: 't-cmd', text: '\n> find --target "maa_jaisa_pyar"', pause: 640 },
+      { cls: 't-out', text: '\n8 ارب دل اسکین ہو گئے…\n', pause: 600 },
+      { cls: 't-err', text: '\nERROR: کوئی متبادل نہیں ملا۔\n', pause: 420 },
+      { cls: 't-cmd', text: '\n> shukriya --target=ammi --level=behad', pause: 720 },
+      { cls: 't-love', text: '\n  امی شکریہ ❤️\n  آپ بے مثال ہیں۔\n', pause: 0 },
+    ],
+    en: [
+      { cls: 't-cmd', text: '> love_scan.exe', pause: 560 },
+      { cls: 't-out', text: '\nSYSTEM: search started...\n', pause: 380 },
+      { cls: 't-cmd', text: '\n> find --target "mother_like_love"', pause: 640 },
+      { cls: 't-err', text: '\nERROR: no replacement found.\n', pause: 420 },
+      { cls: 't-love', text: '\n  Thank you, Mom ❤️\n  You are irreplaceable.\n', pause: 0 },
+    ],
+  };
 
+  const script = APP.lang === 'ur' ? scripts.ur : scripts.en;
   let i = 0, charI = 0, cursorEl = null;
 
   function addCursor() {
-    if (cursorEl) cursorEl.remove();
+    cursorEl?.remove();
     cursorEl = document.createElement('span');
     cursorEl.className = 't-cursor';
     body.appendChild(cursorEl);
@@ -426,7 +523,7 @@ function startTerminal() {
     if (charI < seg.text.length) {
       span.textContent += seg.text[charI++];
       addCursor();
-      setTimeout(typeSegment, 22 + Math.random() * 18);
+      setTimeout(typeSegment, 20 + Math.random() * 16);
     } else {
       span.removeAttribute('id');
       charI = 0;
@@ -439,20 +536,187 @@ function startTerminal() {
   typeSegment();
 }
 
-
-/* ── 7. PARALLAX EFFECT ── */
+/* ── 7. PARALLAX ── */
 (function initParallax() {
+  if (APP.reducedMotion) return;
   const hero = document.querySelector('.hero-inner');
   if (!hero) return;
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
-    hero.style.transform = `translateY(${y * 0.25}px)`;
-    hero.style.opacity   = Math.max(0, 1 - y / 600);
+    hero.style.transform = `translateY(${y * 0.2}px)`;
+    hero.style.opacity = Math.max(0, 1 - y / 620);
   });
 })();
 
+/* ── 8. VOICE NOTE + WAVEFORM ── */
+(function initVoiceNote() {
+  const btn = document.getElementById('voice-play-btn');
+  const waveform = document.getElementById('waveform');
+  const text = document.getElementById('voice-text');
+  if (!btn || !waveform) return;
 
-/* ── 8. SMOOTH SCROLL for anchors ── */
+  for (let i = 0; i < 24; i++) {
+    const bar = document.createElement('span');
+    bar.style.setProperty('--h', (Math.random() * 0.9 + 0.3).toFixed(2));
+    bar.style.animationDelay = `${(i % 6) * 0.07}s`;
+    waveform.appendChild(bar);
+  }
+
+  btn.addEventListener('click', () => {
+    vibrate(26);
+    const message = APP.lang === 'ur'
+      ? 'امی، آپ کی محبت اور دعاؤں کے لیے بہت شکریہ۔ آپ میری دنیا ہیں۔'
+      : 'Mom, thank you for your love and prayers. You are my world.';
+
+    waveform.classList.add('active');
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(message);
+      if (!speechVoices.length) speechVoices = window.speechSynthesis.getVoices?.() || [];
+      const hasUrdu = speechVoices.some(v => v.lang && v.lang.toLowerCase().startsWith('ur'));
+      utter.lang = APP.lang === 'ur' && hasUrdu ? 'ur-PK' : 'en-US';
+      if (APP.lang === 'ur' && !hasUrdu && text) {
+        text.textContent = 'نوٹ: براؤزر میں اردو آواز دستیاب نہیں، انگریزی آواز استعمال ہوگی۔';
+      } else if (APP.lang === 'en' && !hasUrdu && text) {
+        text.textContent = 'Note: Urdu voice is unavailable in this browser, English voice is being used.';
+      }
+      utter.rate = 0.9;
+      utter.onend = () => waveform.classList.remove('active');
+      window.speechSynthesis.speak(utter);
+    } else {
+      setTimeout(() => waveform.classList.remove('active'), 3200);
+    }
+
+    if (text) text.textContent = APP.lang === 'ur' ? 'دل سے: شکریہ امی 💖' : 'From the heart: Thank you Mom 💖';
+  });
+})();
+
+/* ── 9. MEMORY CAPSULE HEARTS ── */
+(function initMemoryCapsules() {
+  const wrap = document.getElementById('final-particles');
+  const toast = document.getElementById('memory-toast');
+  if (!wrap || !toast) return;
+
+  const memories = [
+    { ur: 'امی کی دعا، میری طاقت۔', en: 'Mom\'s prayer is my strength.' },
+    { ur: 'آپ کی مسکراہٹ میرا سکون ہے۔', en: 'Your smile is my peace.' },
+    { ur: 'آپ جیسی کوئی نہیں۔', en: 'No one like you, Mom.' },
+    { ur: 'آپ میری جنت ہیں۔', en: 'You are my paradise.' },
+    { ur: 'شکریہ امی، ہر سانس کے لیے۔', en: 'Thank you Mom, for every breath.' },
+  ];
+
+  function showToast(txt) {
+    toast.textContent = txt;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  for (let i = 0; i < 7; i++) {
+    const h = document.createElement('button');
+    h.className = 'memory-heart';
+    h.textContent = '💗';
+    h.style.left = `${8 + Math.random() * 84}%`;
+    h.style.top = `${8 + Math.random() * 70}%`;
+    h.style.animationDelay = `${Math.random() * 2.6}s`;
+    h.addEventListener('click', () => {
+      const m = memories[Math.floor(Math.random() * memories.length)];
+      showToast(APP.lang === 'ur' ? m.ur : m.en);
+      vibrate(22);
+    });
+    wrap.appendChild(h);
+  }
+})();
+
+/* ── 10. FINAL LONG PRESS SURPRISE ── */
+(function initLongPressSurprise() {
+  const heart = document.getElementById('final-heart');
+  const final = document.querySelector('.final-section');
+  if (!heart || !final) return;
+
+  let timer = null;
+  const BURST_COUNT = 22; // tuned for visual density without overcrowding
+
+  function burst() {
+    vibrate(45);
+    const words = APP.lang === 'ur'
+      ? ['شکریہ', 'امی', 'محبت', 'دعا', 'رحمت']
+      : ['Thanks', 'Mom', 'Love', 'Prayer', 'Mercy'];
+
+    for (let i = 0; i < BURST_COUNT; i++) {
+      const span = document.createElement('span');
+      span.textContent = words[i % words.length];
+      span.style.position = 'absolute';
+      span.style.left = `${Math.random() * 100}%`;
+      span.style.top = `${20 + Math.random() * 60}%`;
+      span.style.fontSize = `${0.7 + Math.random() * 0.8}rem`;
+      span.style.color = 'rgba(255,179,193,0.9)';
+      span.style.pointerEvents = 'none';
+      span.style.transition = 'transform 1.2s ease, opacity 1.2s ease';
+      final.appendChild(span);
+      requestAnimationFrame(() => {
+        span.style.transform = `translateY(-${40 + Math.random() * 80}px)`;
+        span.style.opacity = '0';
+      });
+      setTimeout(() => span.remove(), 1300);
+    }
+  }
+
+  function startPress() {
+    timer = setTimeout(burst, 700);
+  }
+
+  function cancelPress() {
+    clearTimeout(timer);
+  }
+
+  heart.addEventListener('mousedown', startPress);
+  heart.addEventListener('touchstart', startPress, { passive: true });
+  heart.addEventListener('mouseup', cancelPress);
+  heart.addEventListener('mouseleave', cancelPress);
+  heart.addEventListener('touchend', cancelPress);
+})();
+
+/* ── 11. LITE MODE TOGGLE ── */
+(function initLiteMode() {
+  const btn = document.getElementById('lite-mode-btn');
+  if (!btn) return;
+  APP.liteMode = APP.reducedMotion || PERF.isLowEndDevice;
+
+  function syncUi() {
+    document.body.classList.toggle('reduced-motion', APP.liteMode);
+    btn.textContent = APP.liteMode ? 'مکمل' : 'سادہ';
+  }
+
+  btn.addEventListener('click', () => {
+    APP.liteMode = !APP.liteMode;
+    syncUi();
+    vibrate(16);
+  });
+
+  syncUi();
+})();
+
+(function initAdaptiveSignals() {
+  reducedMotionQuery.addEventListener('change', e => {
+    APP.reducedMotion = e.matches;
+    if (APP.reducedMotion) {
+      APP.liteMode = true;
+      document.body.classList.add('reduced-motion');
+    }
+  });
+
+  const cardCount = document.querySelectorAll('.cards-grid .card').length;
+  document.documentElement.style.setProperty('--story-card-count', String(cardCount || 1));
+
+  if ('speechSynthesis' in window) {
+    speechVoices = window.speechSynthesis.getVoices?.() || [];
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      speechVoices = window.speechSynthesis.getVoices?.() || [];
+    });
+  }
+})();
+
+/* ── 12. SMOOTH SCROLL for anchors ── */
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
@@ -460,3 +724,4 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     if (target) target.scrollIntoView({ behavior: 'smooth' });
   });
 });
+let speechVoices = [];
